@@ -18,21 +18,24 @@ public class PredictService {
     @Autowired
     private EncuestaRepository encuestaRepository;
 
+    @Autowired
+    private MlService mlService;
+
     private Classifier modeloWeka;
     private ArrayList<Attribute> attributes;
 
     @PostConstruct
-    public void init() throws Exception {
-
-        // Cargar modelo Weka--------------------------------------
-
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("models/modelo_cancelacion.model");
-        if (inputStream == null) throw new RuntimeException("No se encontró el modelo en resources/models/");
-        ObjectInputStream ois = new ObjectInputStream(inputStream);
-        modeloWeka = (Classifier) ois.readObject();
-        ois.close();
-
-        //----------------------------------------------------------
+    public void init() {
+        // Cargar modelo Weka legado solo si existe; en nube delega a MlService (Python)
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("models/modelo_cancelacion.model")) {
+            if (inputStream != null) {
+                try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
+                    modeloWeka = (Classifier) ois.readObject();
+                }
+            }
+        } catch (Exception e) {
+            modeloWeka = null;
+        }
 
         // Definir atributos (debe ser igual al ARFF de entrenamiento)
         attributes = new ArrayList<>(Arrays.asList(
@@ -56,7 +59,16 @@ public class PredictService {
         ));
     }
 
+    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> predecirCancelaciones() throws Exception {
+        if (modeloWeka == null) {
+            Map<String, Object> batch = mlService.predictAllFromDatabase();
+            Object preds = batch.get("predicciones");
+            if (preds instanceof List<?>) {
+                return (List<Map<String, Object>>) preds;
+            }
+            return Collections.emptyList();
+        }
         List<Encuesta> encuestas = encuestaRepository.findAll();
         List<Map<String, Object>> resultados = new ArrayList<>();
 

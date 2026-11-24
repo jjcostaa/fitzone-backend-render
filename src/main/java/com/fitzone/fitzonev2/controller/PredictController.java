@@ -2,6 +2,7 @@ package com.fitzone.fitzonev2.controller;
 
 import com.fitzone.fitzonev2.model.Encuesta;
 import com.fitzone.fitzonev2.repository.EncuestaRepository;
+import com.fitzone.fitzonev2.service.MlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import weka.classifiers.Classifier;
@@ -21,17 +22,36 @@ public class PredictController {
     @Autowired
     private EncuestaRepository encuestaRepository;
 
-    // Carga el modelo una sola vez al levantar el backend
-    public PredictController() throws Exception {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("models/modelo_cancelacion.model");
-        if (inputStream == null) throw new RuntimeException("No se encontró el modelo en resources/models/");
-        ObjectInputStream ois = new ObjectInputStream(inputStream);
-        modeloWeka = (Classifier) ois.readObject();
-        ois.close();
+    @Autowired
+    private MlService mlService;
+
+    // Carga el modelo Weka heredado solo si existe; en nube delega al motor Python ML (MlService)
+    public PredictController() {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("models/modelo_cancelacion.model")) {
+            if (inputStream != null) {
+                try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
+                    modeloWeka = (Classifier) ois.readObject();
+                }
+            } else {
+                System.out.println("[PredictController] Modelo Weka legado no presente; usando MlService (Python Random Forest).");
+            }
+        } catch (Exception e) {
+            System.out.println("[PredictController] Fallback a MlService (Python): " + e.getMessage());
+            modeloWeka = null;
+        }
     }
 
     @GetMapping("/cancelaciones")
+    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> predecirCancelaciones() throws Exception {
+        if (modeloWeka == null) {
+            Map<String, Object> batch = mlService.predictAllFromDatabase();
+            Object preds = batch.get("predicciones");
+            if (preds instanceof List<?>) {
+                return (List<Map<String, Object>>) preds;
+            }
+            return Collections.emptyList();
+        }
         List<Encuesta> encuestas = encuestaRepository.findAll();
         List<Map<String, Object>> resultados = new ArrayList<>();
 
