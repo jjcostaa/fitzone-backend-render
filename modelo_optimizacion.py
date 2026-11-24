@@ -81,7 +81,8 @@ def resolver_asignacion():
         print(f"COSTO MINIMO TOTAL OPERATIVO: ${value(prob.objective):.2f}")
         print("="*45 + "\n")
     else:
-        print("\n[ERROR] El modelo es infactible. No hay suficientes horas disponibles entre los instructores para cubrir todas las clases. Por favor, revisa la capacidad de horas o contrata más instructores.")
+        print("\n[ERROR] El modelo es infactible. No hay suficientes horas disponibles entre los instructores  " \
+        "para cubrir todas las clases. Por favor, revisa la capacidad de horas o contrata más instructores.")
 
 if __name__ == "__main__":
     resolver_asignacion()

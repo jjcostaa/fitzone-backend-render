@@ -1,17 +1,21 @@
 package com.fitzone.fitzonev2.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fitzone.fitzonev2.dto.ChatResponse;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fitzone.fitzonev2.dto.ChatResponse;
 
 @Service
 public class ChatbotService {
@@ -27,6 +31,7 @@ public class ChatbotService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // Aqui le damos las intruncciones a la IA (como el promp)
     private static final String SYSTEM_PROMPT =
             "Eres FitBot, el asistente virtual oficial de FitZone Gym. Tu rol es ayudar a los usuarios con informacion sobre el gimnasio.\n" +
             "\n" +
@@ -59,66 +64,73 @@ public class ChatbotService {
             "- Si no sabes algo especifico, sugiere contactar al gimnasio directamente.\n" +
             "- Respuestas concisas (maximo 3-4 oraciones).\n" +
             "- Usa emojis ocasionalmente para ser mas amigable.\n" +
-            "- No inventes informacion que no este en este contexto.\n";
+            "- No inventes informacion que no este en este contexto.\n"+
+            "- no hacer niguna operacion matematica.\n"+
+            "- solo responde las preguntas en base a la información del gymnasio.\n";
 
     public ChatResponse chat(String userMessage) {
-        try {
-            // Construir JSON con Jackson
-            Map<String, Object> requestMap = new LinkedHashMap<>();
-            requestMap.put("model", groqModel);
-            requestMap.put("temperature", 0.7);
-            requestMap.put("max_tokens", 512);
+        List<String> modelsToTry = List.of(groqModel, "openai/gpt-oss-20b", "qwen/qwen3.8-27b");
+        String lastError = "No se pudo conectar con FitBot.";
 
-            List<Map<String, String>> messages = new ArrayList<>();
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(15))
+                .build();
 
-            Map<String, String> systemMsg = new LinkedHashMap<>();
-            systemMsg.put("role", "system");
-            systemMsg.put("content", SYSTEM_PROMPT);
-            messages.add(systemMsg);
+        for (String model : modelsToTry) {
+            try {
+                Map<String, Object> requestMap = new LinkedHashMap<>();
+                requestMap.put("model", model);
+                requestMap.put("temperature", 0.7);
+                requestMap.put("max_tokens", 512);
 
-            Map<String, String> userMsg = new LinkedHashMap<>();
-            userMsg.put("role", "user");
-            userMsg.put("content", userMessage);
-            messages.add(userMsg);
+                List<Map<String, String>> messages = new ArrayList<>();
 
-            requestMap.put("messages", messages);
+                Map<String, String> systemMsg = new LinkedHashMap<>();
+                systemMsg.put("role", "system");
+                systemMsg.put("content", SYSTEM_PROMPT);
+                messages.add(systemMsg);
 
-            String requestBody = objectMapper.writeValueAsString(requestMap);
+                Map<String, String> userMsg = new LinkedHashMap<>();
+                userMsg.put("role", "user");
+                userMsg.put("content", userMessage);
+                messages.add(userMsg);
 
-            // Java 11+ HttpClient — más robusto para HTTPS externo que RestTemplate
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(15))
-                    .build();
+                requestMap.put("messages", messages);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(groqApiUrl))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + groqApiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
+                String requestBody = objectMapper.writeValueAsString(requestMap);
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(groqApiUrl))
+                        .timeout(Duration.ofSeconds(30))
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer " + groqApiKey)
+                        .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                        .build();
 
-            if (response.statusCode() == 200) {
-                JsonNode root = objectMapper.readTree(response.body());
-                JsonNode choices = root.path("choices");
-                if (choices.isArray() && choices.size() > 0) {
-                    String content = choices.get(0).path("message").path("content").asText();
-                    if (content != null && !content.isEmpty()) {
-                        return new ChatResponse(content, true);
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() == 200) {
+                    JsonNode root = objectMapper.readTree(response.body());
+                    JsonNode choices = root.path("choices");
+                    if (choices.isArray() && choices.size() > 0) {
+                        String content = choices.get(0).path("message").path("content").asText();
+                        if (content != null && !content.isEmpty()) {
+                            // Limpiar etiquetas de razonamiento interno si el modelo las incluye
+                            content = content.replaceAll("(?s)<think>.*?</think>", "").trim();
+                            if (!content.isEmpty()) {
+                                return new ChatResponse(content, true);
+                            }
+                        }
                     }
+                } else {
+                    System.err.println("Groq API error (" + model + ") " + response.statusCode() + ": " + response.body());
+                    lastError = "Error " + response.statusCode() + " al conectar con el asistente.";
                 }
-                return new ChatResponse("No pude generar una respuesta. Intenta de nuevo. 🙏", false);
-            } else {
-                System.err.println("Groq API error " + response.statusCode() + ": " + response.body());
-                return new ChatResponse("Error " + response.statusCode() + " al conectar con el asistente. Intenta de nuevo.", false);
+            } catch (Exception e) {
+                System.err.println("ChatbotService exception (" + model + "): " + e.getMessage());
+                lastError = "No fue posible conectar con el asistente en este momento.";
             }
-
-        } catch (Exception e) {
-            System.err.println("ChatbotService exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
-            e.printStackTrace();
-            return new ChatResponse("⚠️ Error de conexion: " + e.getMessage(), false);
         }
+        return new ChatResponse(lastError + " Intenta de nuevo en unos segundos. 🙏", false);
     }
 }

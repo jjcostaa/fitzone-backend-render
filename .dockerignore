@@ -1,0 +1,13 @@
+target/
+.git/
+.github/
+.vscode/
+.idea/
+*.log
+*.iml
+.env
+uploads/
+*.apk
+*.docx
+ml/__pycache__/
+__pycache__/

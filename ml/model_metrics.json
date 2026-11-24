@@ -1,0 +1,425 @@
+{
+  "generado_en": "2026-11-23T17:05:45.277342+00:00",
+  "dataset": {
+    "total_registros": 800,
+    "registros_entrenamiento": 640,
+    "registros_prueba": 160,
+    "tasa_cancelacion_porcentaje": 56.75,
+    "variables_predictoras": 16
+  },
+  "modelo_ganador": "Random Forest",
+  "comparacion_modelos": [
+    {
+      "modelo": "Random Forest",
+      "accuracy": 0.9,
+      "precision": 0.9032,
+      "recall": 0.9231,
+      "f1_score": 0.913,
+      "roc_auc": 0.9626,
+      "cv_f1_mean": 0.8923,
+      "cv_f1_std": 0.0242,
+      "matriz_confusion": {
+        "tn": 60,
+        "fp": 9,
+        "fn": 7,
+        "tp": 84
+      },
+      "curva_roc": [
+        {
+          "fpr": 0.0,
+          "tpr": 0.0
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.209
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.253
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.264
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.286
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.604
+        },
+        {
+          "fpr": 0.029,
+          "tpr": 0.604
+        },
+        {
+          "fpr": 0.029,
+          "tpr": 0.758
+        },
+        {
+          "fpr": 0.043,
+          "tpr": 0.758
+        },
+        {
+          "fpr": 0.043,
+          "tpr": 0.824
+        },
+        {
+          "fpr": 0.058,
+          "tpr": 0.824
+        },
+        {
+          "fpr": 0.058,
+          "tpr": 0.835
+        },
+        {
+          "fpr": 0.072,
+          "tpr": 0.835
+        },
+        {
+          "fpr": 0.072,
+          "tpr": 0.879
+        },
+        {
+          "fpr": 0.116,
+          "tpr": 0.879
+        },
+        {
+          "fpr": 0.116,
+          "tpr": 0.901
+        },
+        {
+          "fpr": 0.13,
+          "tpr": 0.901
+        },
+        {
+          "fpr": 0.13,
+          "tpr": 0.945
+        },
+        {
+          "fpr": 0.188,
+          "tpr": 0.945
+        },
+        {
+          "fpr": 0.188,
+          "tpr": 0.956
+        },
+        {
+          "fpr": 0.217,
+          "tpr": 0.956
+        },
+        {
+          "fpr": 0.217,
+          "tpr": 0.967
+        },
+        {
+          "fpr": 0.304,
+          "tpr": 0.967
+        },
+        {
+          "fpr": 0.304,
+          "tpr": 0.989
+        },
+        {
+          "fpr": 0.623,
+          "tpr": 0.989
+        },
+        {
+          "fpr": 0.623,
+          "tpr": 1.0
+        },
+        {
+          "fpr": 1.0,
+          "tpr": 1.0
+        }
+      ]
+    },
+    {
+      "modelo": "Gradient Boosting",
+      "accuracy": 0.8562,
+      "precision": 0.8617,
+      "recall": 0.8901,
+      "f1_score": 0.8757,
+      "roc_auc": 0.9482,
+      "cv_f1_mean": 0.9025,
+      "cv_f1_std": 0.0163,
+      "matriz_confusion": {
+        "tn": 56,
+        "fp": 13,
+        "fn": 10,
+        "tp": 81
+      },
+      "curva_roc": [
+        {
+          "fpr": 0.0,
+          "tpr": 0.0
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.099
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.176
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.231
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.385
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.626
+        },
+        {
+          "fpr": 0.014,
+          "tpr": 0.725
+        },
+        {
+          "fpr": 0.029,
+          "tpr": 0.758
+        },
+        {
+          "fpr": 0.043,
+          "tpr": 0.769
+        },
+        {
+          "fpr": 0.072,
+          "tpr": 0.791
+        },
+        {
+          "fpr": 0.087,
+          "tpr": 0.802
+        },
+        {
+          "fpr": 0.101,
+          "tpr": 0.824
+        },
+        {
+          "fpr": 0.116,
+          "tpr": 0.857
+        },
+        {
+          "fpr": 0.145,
+          "tpr": 0.868
+        },
+        {
+          "fpr": 0.174,
+          "tpr": 0.879
+        },
+        {
+          "fpr": 0.188,
+          "tpr": 0.912
+        },
+        {
+          "fpr": 0.203,
+          "tpr": 0.923
+        },
+        {
+          "fpr": 0.217,
+          "tpr": 0.934
+        },
+        {
+          "fpr": 0.261,
+          "tpr": 0.945
+        },
+        {
+          "fpr": 0.319,
+          "tpr": 0.956
+        },
+        {
+          "fpr": 0.333,
+          "tpr": 0.967
+        },
+        {
+          "fpr": 0.362,
+          "tpr": 0.978
+        },
+        {
+          "fpr": 0.464,
+          "tpr": 0.989
+        },
+        {
+          "fpr": 0.623,
+          "tpr": 1.0
+        },
+        {
+          "fpr": 1.0,
+          "tpr": 1.0
+        }
+      ]
+    },
+    {
+      "modelo": "Red Neuronal (MLP)",
+      "accuracy": 0.8688,
+      "precision": 0.907,
+      "recall": 0.8571,
+      "f1_score": 0.8814,
+      "roc_auc": 0.9369,
+      "cv_f1_mean": 0.8692,
+      "cv_f1_std": 0.0204,
+      "matriz_confusion": {
+        "tn": 61,
+        "fp": 8,
+        "fn": 13,
+        "tp": 78
+      },
+      "curva_roc": [
+        {
+          "fpr": 0.0,
+          "tpr": 0.0
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.088
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.451
+        },
+        {
+          "fpr": 0.014,
+          "tpr": 0.615
+        },
+        {
+          "fpr": 0.029,
+          "tpr": 0.659
+        },
+        {
+          "fpr": 0.043,
+          "tpr": 0.725
+        },
+        {
+          "fpr": 0.058,
+          "tpr": 0.78
+        },
+        {
+          "fpr": 0.087,
+          "tpr": 0.835
+        },
+        {
+          "fpr": 0.101,
+          "tpr": 0.846
+        },
+        {
+          "fpr": 0.116,
+          "tpr": 0.879
+        },
+        {
+          "fpr": 0.159,
+          "tpr": 0.901
+        },
+        {
+          "fpr": 0.217,
+          "tpr": 0.912
+        },
+        {
+          "fpr": 0.246,
+          "tpr": 0.923
+        },
+        {
+          "fpr": 0.261,
+          "tpr": 0.934
+        },
+        {
+          "fpr": 0.333,
+          "tpr": 0.956
+        },
+        {
+          "fpr": 0.435,
+          "tpr": 0.967
+        },
+        {
+          "fpr": 0.478,
+          "tpr": 0.978
+        },
+        {
+          "fpr": 0.638,
+          "tpr": 0.989
+        },
+        {
+          "fpr": 0.71,
+          "tpr": 1.0
+        },
+        {
+          "fpr": 1.0,
+          "tpr": 1.0
+        }
+      ]
+    }
+  ],
+  "importancia_variables": [
+    {
+      "variable": "satisfaccion_servicio",
+      "importancia": 0.1476
+    },
+    {
+      "variable": "frecuencia_semanal",
+      "importancia": 0.1305
+    },
+    {
+      "variable": "ha_asistido_ultima_semana_si",
+      "importancia": 0.1041
+    },
+    {
+      "variable": "ha_asistido_ultima_semana_no",
+      "importancia": 0.0939
+    },
+    {
+      "variable": "ingresos_mensuales",
+      "importancia": 0.0928
+    },
+    {
+      "variable": "pagos_atrasados",
+      "importancia": 0.0728
+    },
+    {
+      "variable": "tiempo_membresia_meses",
+      "importancia": 0.0464
+    },
+    {
+      "variable": "cambio_peso_mensual",
+      "importancia": 0.0455
+    }
+  ],
+  "clustering": {
+    "algoritmo": "K-Means (k=3)",
+    "silhouette_score": 0.3349,
+    "segmentos": [
+      {
+        "cluster_id": 0,
+        "segmento": "Atleta Comprometido",
+        "cantidad": 283,
+        "porcentaje": 35.4,
+        "frecuencia_promedio": 4.54,
+        "satisfaccion_promedio": 8.31,
+        "pagos_atrasados_promedio": 0.42,
+        "tasa_cancelacion": 11.0
+      },
+      {
+        "cluster_id": 1,
+        "segmento": "Miembro Casual",
+        "cantidad": 281,
+        "porcentaje": 35.1,
+        "frecuencia_promedio": 2.17,
+        "satisfaccion_promedio": 5.3,
+        "pagos_atrasados_promedio": 0.73,
+        "tasa_cancelacion": 66.5
+      },
+      {
+        "cluster_id": 2,
+        "segmento": "Miembro en Riesgo",
+        "cantidad": 236,
+        "porcentaje": 29.5,
+        "frecuencia_promedio": 0.45,
+        "satisfaccion_promedio": 2.73,
+        "pagos_atrasados_promedio": 5.0,
+        "tasa_cancelacion": 100.0
+      }
+    ]
+  }
+}

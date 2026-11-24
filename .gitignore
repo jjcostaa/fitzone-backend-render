@@ -41,3 +41,9 @@ src/main/resources/models/*.model
 application-local.properties
 application-secret.properties
 secrets.properties
+
+# Binarios pesados y artefactos locales
+*.apk
+uploads/
+ml/__pycache__/
+__pycache__/

@@ -15,6 +15,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -26,7 +32,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Desactivamos CSRF (recomendado para APIs)
+            // Habilitar CORS global para consumo desde Flutter y clientes web
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // Desactivamos CSRF (recomendado para APIs REST stateless)
             .csrf(csrf -> csrf.disable())
 
             // Sin sesiones: todo por token
@@ -34,9 +43,9 @@ public class SecurityConfig {
 
             // Rutas permitidas vs autenticadas
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // login JWT
-                .requestMatchers("/entrenador/api/**").authenticated() // APIs seguras
-                .anyRequest().permitAll() // vistas y demás
+                .requestMatchers("/api/auth/**", "/api/health").permitAll()
+                .requestMatchers("/entrenador/api/**").authenticated()
+                .anyRequest().permitAll()
             )
 
             // Para evitar redirección HTML y en su lugar devolver 401
@@ -46,6 +55,20 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     // Bean necesario para login con AuthenticationManager

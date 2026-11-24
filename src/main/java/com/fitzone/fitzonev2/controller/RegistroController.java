@@ -28,6 +28,9 @@ public class RegistroController {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${app.base-url:http://localhost:8080}")
+    private String appBaseUrl;
+
     // Clase para almacenar tokens temporalmente
     public static class TokenStorage {
         public static Map<String, String> tokens = new HashMap<>();
@@ -175,7 +178,7 @@ public Map<String, Object> registrarUsuario(@RequestBody Map<String, Object> for
 
     // Método común para enviar correos de verificación
     private void enviarCorreoVerificacion(Usuario usuario, String token) {
-        String urlVerificacion = "http://localhost:8080/verificar?correo=" + usuario.getCorreo() + "&token=" + token;
+        String urlVerificacion = appBaseUrl + "/verificar?correo=" + usuario.getCorreo() + "&token=" + token;
 
         SimpleMailMessage mensaje = new SimpleMailMessage();
         mensaje.setFrom(fromEmail);

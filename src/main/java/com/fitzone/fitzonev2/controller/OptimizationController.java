@@ -1,6 +1,8 @@
 package com.fitzone.fitzonev2.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,12 +13,16 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/optimize")
+@CrossOrigin(origins = "*")
 public class OptimizationController {
+
+    @Value("${python.executable:python}")
+    private String pythonExecutable;
 
     @GetMapping
     public ResponseEntity<String> runOptimization() {
         try {
-            ProcessBuilder pb = new ProcessBuilder("python", "modelo_optimizacion_json.py");
+            ProcessBuilder pb = new ProcessBuilder(pythonExecutable, "modelo_optimizacion_json.py");
             pb.directory(new File(".")); 
             pb.redirectErrorStream(true);
             Process process = pb.start();

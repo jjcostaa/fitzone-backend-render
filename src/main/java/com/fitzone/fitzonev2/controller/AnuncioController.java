@@ -38,6 +38,12 @@ public class AnuncioController {
         return anuncioService.agregarAnuncio(anuncio);
     }
 
+    // Crear anuncio rápido en JSON (usado desde la app móvil de Admin)
+    @PostMapping("/crear")
+    public ResponseEntity<Anuncio> crearAnuncioJson(@RequestBody Anuncio anuncio) {
+        return ResponseEntity.ok(anuncioService.agregarAnuncio(anuncio));
+    }
+
     // Obtener anuncios (usuarios ven esto)
     @GetMapping("/listar")
     public List<Anuncio> obtenerAnuncios() {

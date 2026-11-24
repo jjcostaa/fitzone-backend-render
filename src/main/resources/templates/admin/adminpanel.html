@@ -297,6 +297,20 @@
                     style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; padding: 0; max-height: 420px; overflow: hidden;">
                     <div style="height:420px; overflow-y:auto;" id="listaPredicciones"></div>
                 </div>
+
+                <!-- Minería de Datos II: Comparación de Modelos Avanzados & K-Means -->
+                <div style="margin-top: 28px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); padding: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                        <div>
+                            <h2 style="margin:0; color:#222;">Minería de Datos II — Evaluación de Modelos y Segmentación</h2>
+                            <p style="margin:4px 0 0; color:#666; font-size:0.92rem;">Comparativa de Random Forest, Gradient Boosting y Red Neuronal (MLP) + Clustering K-Means.</p>
+                        </div>
+                        <button onclick="cargarMetricasML()" class="btn" style="background:#e65100; color:#fff;">
+                            <i class="fas fa-brain"></i> Cargar Métricas y Segmentos ML
+                        </button>
+                    </div>
+                    <div id="ml-metrics-container" style="color:#555;">Haz clic en "Cargar Métricas y Segmentos ML" para visualizar el desempeño de los modelos entrenados.</div>
+                </div>
             </section>
 
             <style>
@@ -518,7 +532,7 @@
             const nuevoUsuario = {
                 nombre: form.nombre.value,
                 correo: form.correo.value,
-                password: form.password.value,
+                contrasena: form.password.value,
                 rol: form.rol.value
             };
             fetch("http://localhost:8080/api/usuarios/agregar", {
@@ -782,6 +796,264 @@
                     console.error(err);
                 });
         }
+
+        let mlChartInstances = [];
+
+        function limpiarGraficasML() {
+            mlChartInstances.forEach(ch => { try { ch.destroy(); } catch (e) {} });
+            mlChartInstances = [];
+        }
+
+        function formatearNombreVariable(v) {
+            const mapa = {
+                'satisfaccion_servicio': 'Satisfacción del servicio',
+                'frecuencia_semanal': 'Frecuencia semanal',
+                'ha_asistido_ultima_semana_si': 'Asistió última semana (Sí)',
+                'ha_asistido_ultima_semana_no': 'Asistió última semana (No)',
+                'ingresos_mensuales': 'Ingresos mensuales',
+                'pagos_atrasados': 'Pagos atrasados',
+                'tiempo_membresia_meses': 'Antigüedad (meses)',
+                'cambio_peso_mensual': 'Cambio de peso mensual',
+                'peso_actual': 'Peso actual',
+                'edad': 'Edad'
+            };
+            return mapa[v] || v.replace(/_/g, ' ');
+        }
+
+        function cargarMetricasML() {
+            const container = document.getElementById('ml-metrics-container');
+            container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando métricas y generando gráficas de Minería de Datos II...';
+            fetch('/api/ml/metrics')
+                .then(res => res.json())
+                .then(data => {
+                    limpiarGraficasML();
+                    const modelos = data.comparacion_modelos || [];
+                    const segmentos = (data.clustering && data.clustering.segmentos) ? data.clustering.segmentos : [];
+                    const variables = data.importancia_variables || [];
+                    const ganador = modelos.find(m => m.modelo === data.modelo_ganador) || modelos[0];
+                    const cm = ganador && ganador.matriz_confusion ? ganador.matriz_confusion : { tn: 0, fp: 0, fn: 0, tp: 0 };
+
+                    let rows = modelos.map(m => `
+                        <tr style="${m.modelo === data.modelo_ganador ? 'background:#fff3e0; font-weight:600;' : ''}">
+                            <td>${m.modelo} ${m.modelo === data.modelo_ganador ? '🏆' : ''}</td>
+                            <td>${(m.accuracy * 100).toFixed(1)}%</td>
+                            <td>${(m.precision * 100).toFixed(1)}%</td>
+                            <td>${(m.recall * 100).toFixed(1)}%</td>
+                            <td>${(m.f1_score * 100).toFixed(1)}%</td>
+                            <td>${(m.roc_auc * 100).toFixed(1)}%</td>
+                        </tr>
+                    `).join('');
+
+                    let segCards = segmentos.map((s, idx) => {
+                        const colors = ['#2e9e5b', '#d99116', '#d92638'];
+                        const c = colors[idx % colors.length];
+                        return `
+                        <div style="border:1px solid ${c}44; border-left:4px solid ${c}; border-radius:8px; padding:12px; background:#fafafa;">
+                            <h4 style="margin:0 0 6px; color:${c};">${s.segmento}</h4>
+                            <p style="margin:2px 0; font-size:0.88rem;"><b>Miembros:</b> ${s.cantidad} (${s.porcentaje}%)</p>
+                            <p style="margin:2px 0; font-size:0.88rem;"><b>Frecuencia prom:</b> ${s.frecuencia_promedio} días/sem</p>
+                            <p style="margin:2px 0; font-size:0.88rem;"><b>Satisfacción prom:</b> ${s.satisfaccion_promedio}/10</p>
+                            <p style="margin:2px 0; font-size:0.88rem;"><b>Tasa cancelación:</b> ${s.tasa_cancelacion}%</p>
+                        </div>`;
+                    }).join('');
+
+                    container.innerHTML = `
+                        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px;">
+                            <div style="flex:1; min-width:160px; background:#fff5f5; border:1px solid #f5c2c7; border-radius:10px; padding:12px;">
+                                <div style="font-size:0.8rem; color:#666;">Modelo Ganador</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#d92638;">🏆 ${data.modelo_ganador || 'Random Forest'}</div>
+                            </div>
+                            <div style="flex:1; min-width:140px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:10px; padding:12px;">
+                                <div style="font-size:0.8rem; color:#666;">Dataset Entrenamiento</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#222;">${data.dataset ? data.dataset.total_registros : '-'} registros</div>
+                            </div>
+                            <div style="flex:1; min-width:140px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:12px;">
+                                <div style="font-size:0.8rem; color:#666;">Silhouette Score (K-Means)</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#0284c7;">${data.clustering ? data.clustering.silhouette_score : '-'}</div>
+                            </div>
+                            <div style="flex:1; min-width:140px; background:#fefce8; border:1px solid #fde68a; border-radius:10px; padding:12px;">
+                                <div style="font-size:0.8rem; color:#666;">ROC-AUC Ganador</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#b45309;">${ganador ? (ganador.roc_auc * 100).toFixed(1) + '%' : '-'}</div>
+                            </div>
+                        </div>
+
+                        <!-- Grid 2x2 de Gráficas Interactivas Chart.js -->
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px; margin-bottom:22px;">
+                            <div style="background:#fafafa; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+                                <h4 style="margin:0 0 10px; color:#222;"><i class="fas fa-chart-bar" style="color:#d92638;"></i> Comparativa de Modelos (Accuracy / F1 / ROC-AUC)</h4>
+                                <div style="height:240px;"><canvas id="mlChartModels"></canvas></div>
+                            </div>
+                            <div style="background:#fafafa; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+                                <h4 style="margin:0 0 10px; color:#222;"><i class="fas fa-chart-area" style="color:#0284c7;"></i> Curvas ROC-AUC (Python scikit-learn)</h4>
+                                <div style="height:240px;"><canvas id="mlChartRoc"></canvas></div>
+                            </div>
+                            <div style="background:#fafafa; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+                                <h4 style="margin:0 0 10px; color:#222;"><i class="fas fa-sliders-h" style="color:#d97706;"></i> Importancia de Variables Predictoras</h4>
+                                <div style="height:240px;"><canvas id="mlChartFeatures"></canvas></div>
+                            </div>
+                            <div style="background:#fafafa; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+                                <h4 style="margin:0 0 10px; color:#222;"><i class="fas fa-chart-pie" style="color:#2e9e5b;"></i> Segmentación de Miembros (K-Means k=3)</h4>
+                                <div style="height:240px;"><canvas id="mlChartClusters"></canvas></div>
+                            </div>
+                        </div>
+
+                        <!-- Matriz de Confusión + Tabla Comparativa -->
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-bottom:18px;">
+                            <div style="background:#fafafa; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+                                <h4 style="margin:0 0 10px; color:#222;">Matriz de Confusión (${data.modelo_ganador || 'Random Forest'})</h4>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:center;">
+                                    <div style="background:#dcfce7; border:1px solid #86efac; border-radius:8px; padding:12px;">
+                                        <div style="font-size:1.4rem; font-weight:800; color:#166534;">${cm.tn}</div>
+                                        <div style="font-size:0.78rem; color:#166534;">Verdaderos Negativos (VN)</div>
+                                    </div>
+                                    <div style="background:#fef3c7; border:1px solid #fcd34d; border-radius:8px; padding:12px;">
+                                        <div style="font-size:1.4rem; font-weight:800; color:#92400e;">${cm.fp}</div>
+                                        <div style="font-size:0.78rem; color:#92400e;">Falsos Positivos (FP)</div>
+                                    </div>
+                                    <div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:8px; padding:12px;">
+                                        <div style="font-size:1.4rem; font-weight:800; color:#991b1b;">${cm.fn}</div>
+                                        <div style="font-size:0.78rem; color:#991b1b;">Falsos Negativos (FN)</div>
+                                    </div>
+                                    <div style="background:#dbeafe; border:1px solid #93c5fd; border-radius:8px; padding:12px;">
+                                        <div style="font-size:1.4rem; font-weight:800; color:#1e40af;">${cm.tp}</div>
+                                        <div style="font-size:0.78rem; color:#1e40af;">Verdaderos Positivos (VP)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="overflow-x:auto; background:#fafafa; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+                                <h4 style="margin:0 0 10px; color:#222;">Tabla de Métricas por Algoritmo</h4>
+                                <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+                                    <thead>
+                                        <tr style="background:#eceff1;">
+                                            <th style="padding:8px; text-align:left;">Modelo</th>
+                                            <th style="padding:8px; text-align:left;">Acc</th>
+                                            <th style="padding:8px; text-align:left;">Prec</th>
+                                            <th style="padding:8px; text-align:left;">Rec</th>
+                                            <th style="padding:8px; text-align:left;">F1</th>
+                                            <th style="padding:8px; text-align:left;">AUC</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows || '<tr><td colspan="6">Ejecuta ml/train_models.py para generar la comparativa.</td></tr>'}</tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <h3 style="margin-top:16px;">Perfiles de Segmentación (K-Means)</h3>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:10px;">
+                            ${segCards}
+                        </div>
+                    `;
+
+                    // 1) Gráfica de Barras Comparativa de Modelos
+                    if (modelos.length > 0 && typeof Chart !== 'undefined') {
+                        mlChartInstances.push(new Chart(document.getElementById('mlChartModels'), {
+                            type: 'bar',
+                            data: {
+                                labels: modelos.map(m => m.modelo),
+                                datasets: [
+                                    { label: 'Accuracy (%)', data: modelos.map(m => +(m.accuracy * 100).toFixed(1)), backgroundColor: '#d92638', borderRadius: 6 },
+                                    { label: 'F1-Score (%)', data: modelos.map(m => +(m.f1_score * 100).toFixed(1)), backgroundColor: '#f59e0b', borderRadius: 6 },
+                                    { label: 'ROC-AUC (%)', data: modelos.map(m => +(m.roc_auc * 100).toFixed(1)), backgroundColor: '#0284c7', borderRadius: 6 }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { y: { min: 65, max: 100, ticks: { callback: v => v + '%' } } },
+                                plugins: { legend: { position: 'bottom' } }
+                            }
+                        }));
+
+                        // 2) Gráfica de Curvas ROC-AUC
+                        const rocColors = ['#d92638', '#f59e0b', '#0284c7'];
+                        const rocDatasets = modelos.map((m, idx) => ({
+                            label: `${m.modelo} (AUC ${(m.roc_auc * 100).toFixed(1)}%)`,
+                            data: (m.curva_roc || [{ fpr: 0, tpr: 0 }, { fpr: 0.12, tpr: m.recall }, { fpr: 1, tpr: 1 }]).map(pt => ({ x: pt.fpr, y: pt.tpr })),
+                            borderColor: rocColors[idx % rocColors.length],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.5,
+                            tension: 0.25,
+                            pointRadius: 2
+                        }));
+                        rocDatasets.push({
+                            label: 'Azar (0.5)',
+                            data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+                            borderColor: '#9ca3af',
+                            borderDash: [6, 4],
+                            borderWidth: 1.5,
+                            pointRadius: 0
+                        });
+                        mlChartInstances.push(new Chart(document.getElementById('mlChartRoc'), {
+                            type: 'line',
+                            data: { datasets: rocDatasets },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: { type: 'linear', min: 0, max: 1, title: { display: true, text: 'Falsos Positivos (FPR)' } },
+                                    y: { min: 0, max: 1, title: { display: true, text: 'Verdaderos Positivos (TPR)' } }
+                                },
+                                plugins: { legend: { position: 'bottom' } }
+                            }
+                        }));
+
+                        // 3) Gráfica de Importancia de Variables
+                        mlChartInstances.push(new Chart(document.getElementById('mlChartFeatures'), {
+                            type: 'bar',
+                            data: {
+                                labels: variables.map(v => formatearNombreVariable(v.variable)),
+                                datasets: [{
+                                    label: 'Importancia (%)',
+                                    data: variables.map(v => +(v.importancia * 100).toFixed(1)),
+                                    backgroundColor: '#d92638',
+                                    borderRadius: 6
+                                }]
+                            },
+                            options: {
+                                indexAxis: 'y',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: { x: { ticks: { callback: v => v + '%' } } },
+                                plugins: { legend: { display: false } }
+                            }
+                        }));
+
+                        // 4) Gráfica Dona de Segmentación K-Means
+                        mlChartInstances.push(new Chart(document.getElementById('mlChartClusters'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: segmentos.map(s => `${s.segmento} (${s.porcentaje}%)`),
+                                datasets: [{
+                                    data: segmentos.map(s => s.cantidad),
+                                    backgroundColor: ['#2e9e5b', '#f59e0b', '#d92638'],
+                                    borderWidth: 2,
+                                    borderColor: '#ffffff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                cutout: '58%',
+                                plugins: { legend: { position: 'bottom' } }
+                            }
+                        }));
+                    }
+                })
+                .catch(err => {
+                    container.innerHTML = '<span style="color:red;">Error cargando métricas ML.</span>';
+                    console.error(err);
+                });
+        }
+
+        // Cargar métricas y gráficas ML automáticamente al abrir la pestaña de Predicciones
+        document.addEventListener('DOMContentLoaded', () => {
+            const predNav = document.querySelector('li[data-section="predictions"]');
+            if (predNav) {
+                predNav.addEventListener('click', () => {
+                    setTimeout(cargarMetricasML, 150);
+                });
+            }
+        });
 
     </script>
 

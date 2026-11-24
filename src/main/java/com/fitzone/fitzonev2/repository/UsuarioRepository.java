@@ -12,6 +12,8 @@ public interface UsuarioRepository extends MongoRepository<Usuario, String> {
 
     Optional<Usuario> findByCorreo(String correo);
 
+    Optional<Usuario> findFirstByCorreoIgnoreCase(String correo);
+
     // NUEVO método para contar por rol
     long countByRol(String rol);
 

@@ -17,22 +17,29 @@ def resolver_asignacion():
     }
 
     capacidad_horas = {
-        'Carlos': 4.0, 'Miguel': 4.0, 'Ana': 5.0
+        'Carlos': 1.0, 'Miguel': 4.0, 'Ana': 5.0
     }
 
+    #  DEFINICIÓN DEL PROBLEMA
     prob = LpProblem("Asignacion", LpMinimize)
+
+    # 3. VARIABLES DE DECISIÓN (ij es binaria: 1 si se asigna, 0 si no)
     x = LpVariable.dicts("Asignacion", [(i, j) for i in instructores for j in clases], cat='Binary')
 
+    # FUNCION OBJETIVO
     prob += lpSum([costos_por_hora[i][j] * duracion_clase[j] * x[(i, j)] for i in instructores for j in clases])
 
+    #restrinción 1 Todas las clases deben tener exactamente 1 instructor asignado
     for j in clases:
         prob += lpSum([x[(i, j)] for i in instructores]) == 1
 
+    #restrinción 2 Los instructores no pueden superar sus horas máximas de disponibilidad
     for i in instructores:
         prob += lpSum([duracion_clase[j] * x[(i, j)] for j in clases]) <= capacidad_horas[i]
 
     prob.solve()
 
+    # Verifica si encontro la solución optima
     if LpStatus[prob.status] == 'Optimal':
         resultado = {
             "status": "Optimal",
